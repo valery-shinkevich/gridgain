@@ -3314,16 +3314,11 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
                 T2<PageMemoryEx, FullPageId> curPageId = pages.poll();
 
-                T2<PageMemoryEx, FullPageId> fullPageId = null;
-
                 try {
                     while (curPageId != null) {
                         // Fail-fast break if some exception occurred.
                         if (writePagesError.get() != null)
                             break;
-
-                        // Save pageId to local variable for future using if exception occurred.
-                        fullPageId = curPageId;
 
                         PageMemoryEx pageMem = curPageId.get1();
 
@@ -3338,7 +3333,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
                     }
                 }
                 catch (IgniteCheckedException e) {
-                    U.error(log, "Failed to write page to pageStore, pageId=" + fullPageId);
+                    U.error(log, "Failed to write page to pageStore, pageId=" + curPageId);
 
                     writePagesError.compareAndSet(null, e);
                 }
@@ -4314,7 +4309,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
             int dirtyPagesCount;
 
-            boolean hasPages, hasUserPages, hasPartitionsToDestroy;
+            boolean hasUserPages, hasPartitionsToDestroy;
 
             DbCheckpointContextImpl ctx0 = new DbCheckpointContextImpl(curr, new PartitionAllocationMap());
 
@@ -4361,13 +4356,11 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
                 hasUserPages = cpPagesTriple.get3();
 
-                hasPages = dirtyPagesCount != 0 || hasUserPages;
-
                 hasPartitionsToDestroy = !curr.destroyQueue.pendingReqs.isEmpty();
 
                 WALPointer cpPtr = null;
 
-                if (hasPages || curr.nextSnapshot || hasPartitionsToDestroy) {
+                if (dirtyPagesCount > 0 || curr.nextSnapshot || hasPartitionsToDestroy) {
                     // No page updates for this checkpoint are allowed from now on.
                     cpPtr = cctx.wal().log(cpRec);
 
@@ -4375,7 +4368,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
                         cpPtr = CheckpointStatus.NULL_PTR;
                 }
 
-                if (hasPages || hasPartitionsToDestroy) {
+                if (dirtyPagesCount > 0 || hasPartitionsToDestroy) {
                     cp = prepareCheckpointEntry(
                         tmpWriteBuf,
                         cpTs,
@@ -4393,7 +4386,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
                 tracker.onLockRelease();
             }
 
-            DbCheckpointListener.Context ctx = createOnCheckpointBeginContext(ctx0, hasPages, hasUserPages);
+            DbCheckpointListener.Context ctx = createOnCheckpointBeginContext(ctx0, dirtyPagesCount > 0, hasUserPages);
 
             curr.transitTo(LOCK_RELEASED);
 
@@ -4410,7 +4403,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
                 }
             }
 
-            if (hasPages || hasPartitionsToDestroy) {
+            if (dirtyPagesCount > 0 || hasPartitionsToDestroy) {
                 assert cp != null;
                 assert cp.checkpointMark() != null;
 

@@ -58,6 +58,9 @@ public class GridConcurrentMultiPairQueue<K, V> {
     /** Keys array. */
     private final K[] keysArr;
 
+    /** Thread local cached segment. */
+    private ThreadLocal<Integer> cachedSegment = ThreadLocal.withInitial(() -> 0);
+
     /** */
     public GridConcurrentMultiPairQueue(Map<K, ? extends Collection<V>> items) {
         int pairCnt = (int)items.entrySet().stream().map(Map.Entry::getValue).filter(k -> k.size() > 0).count();
@@ -126,9 +129,15 @@ public class GridConcurrentMultiPairQueue<K, V> {
         if (absPos >= maxPos)
             return null;
 
-        int segment = Arrays.binarySearch(lenSeq, absPos);
+        int segment = cachedSegment.get();
 
-        segment = segment < 0 ? -segment - 1 : segment;
+        if (absPos > lenSeq[segment]) {
+            segment = Arrays.binarySearch(lenSeq, absPos);
+
+            segment = segment < 0 ? -segment - 1 : segment;
+
+            cachedSegment.set(segment);
+        }
 
         int relPos = segment == 0 ? (int)absPos : (int)(absPos - lenSeq[segment - 1] - 1);
 
