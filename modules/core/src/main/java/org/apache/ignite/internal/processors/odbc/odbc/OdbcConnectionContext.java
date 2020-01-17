@@ -163,7 +163,7 @@ public class OdbcConnectionContext extends ClientListenerAbstractConnectionConte
             }
         };
 
-        initOriginator("odbc");
+        initQueryInitiatorIdentifier("odbc");
 
         handler = new OdbcRequestHandler(ctx, busyLock, sender, maxCursors, distributedJoins, enforceJoinOrder,
             replicatedOnly, collocated, lazy, skipReducerOnUpdate, actx, nestedTxMode, ver, this);

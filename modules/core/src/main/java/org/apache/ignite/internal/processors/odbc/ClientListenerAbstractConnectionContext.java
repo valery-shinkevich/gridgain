@@ -51,8 +51,8 @@ public abstract class ClientListenerAbstractConnectionContext implements ClientL
     /** Authorization context. */
     private AuthorizationContext authCtx;
 
-    /** Originator. */
-    private String originator;
+    /** Query initiator identifier. */
+    private String qryInitiatorId;
 
     /**
      * Constructor.
@@ -144,16 +144,16 @@ public abstract class ClientListenerAbstractConnectionContext implements ClientL
     /**
      *
      */
-    protected void initOriginator(String prefix) {
-        originator = prefix + ":" + ses.remoteAddress().toString();
+    protected void initQueryInitiatorIdentifier(String prefix) {
+        qryInitiatorId = prefix + ":" + ses.remoteAddress().toString();
 
         if (authCtx != null)
-            originator += "@" + authCtx.userName();
+            qryInitiatorId += "@" + authCtx.userName();
     }
     /**
      * @return Originator string.
      */
-    public String originator() {
-        return originator;
+    public String queryInitiatorIdentifier() {
+        return qryInitiatorId;
     }
 }

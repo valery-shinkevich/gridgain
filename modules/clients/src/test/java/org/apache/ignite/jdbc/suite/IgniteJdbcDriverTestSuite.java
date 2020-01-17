@@ -17,7 +17,7 @@
 package org.apache.ignite.jdbc.suite;
 
 import java.security.Security;
-import org.apache.ignite.common.RunningQueryInfoCheckOriginatorTest;
+import org.apache.ignite.common.RunningQueryInfoCheckInitiatorTest;
 import org.apache.ignite.internal.jdbc2.JdbcBlobTest;
 import org.apache.ignite.internal.jdbc2.JdbcBulkLoadSelfTest;
 import org.apache.ignite.internal.jdbc2.JdbcConnectionReopenTest;
@@ -114,7 +114,7 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
     QaJdbcTestSuite.class,
 
-    RunningQueryInfoCheckOriginatorTest.class,
+    RunningQueryInfoCheckInitiatorTest.class,
 
     JdbcConnectionSelfTest.class,
     JdbcStatementSelfTest.class,

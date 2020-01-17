@@ -29,7 +29,6 @@ import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.GridKernalContext;
 import org.apache.ignite.internal.processors.cache.query.GridCacheQueryType;
-import org.apache.ignite.internal.processors.job.GridJobWorker;
 import org.apache.ignite.internal.processors.metric.MetricRegistry;
 import org.apache.ignite.internal.processors.metric.impl.LongAdderMetric;
 import org.apache.ignite.internal.processors.metric.impl.AtomicLongMetric;
@@ -116,11 +115,11 @@ public class RunningQueryManager {
      * @return Id of registered query.
      */
     public Long register(String qry, GridCacheQueryType qryType, String schemaName, boolean loc,
-        @Nullable GridQueryCancel cancel, String originator) {
+        @Nullable GridQueryCancel cancel, String qryInitiatorId) {
         Long qryId = qryIdGen.incrementAndGet();
 
-        if (originator == null)
-            originator = SqlFieldsQuery.threadedOriginator();
+        if (qryInitiatorId == null)
+            qryInitiatorId = SqlFieldsQuery.threadedQueryInitiatorId();
 
         GridRunningQueryInfo run = new GridRunningQueryInfo(
             qryId,
@@ -131,7 +130,7 @@ public class RunningQueryManager {
             System.currentTimeMillis(),
             cancel,
             loc,
-            originator
+            qryInitiatorId
         );
 
         GridRunningQueryInfo preRun = runs.putIfAbsent(qryId, run);

@@ -43,7 +43,7 @@ import org.junit.Test;
 /**
  * Tests for query originator.
  */
-public class RunningQueryInfoCheckOriginatorTest extends JdbcThinAbstractSelfTest {
+public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest {
     /** {@inheritDoc} */
     @Override protected IgniteConfiguration getConfiguration(String igniteInstanceName) throws Exception {
         return super.getConfiguration(igniteInstanceName)
@@ -62,6 +62,8 @@ public class RunningQueryInfoCheckOriginatorTest extends JdbcThinAbstractSelfTes
     /** {@inheritDoc} */
     @Override protected void beforeTestsStarted() throws Exception {
         super.beforeTestsStarted();
+
+        cleanPersistenceDir();
 
         startGrid(0);
         startClientGrid(1);
@@ -85,14 +87,14 @@ public class RunningQueryInfoCheckOriginatorTest extends JdbcThinAbstractSelfTes
 
         GridTestUtils.runAsync(() ->
             grid(0).context().query().querySqlFields(
-                new SqlFieldsQuery("SELECT test.awaitLatch()").setOriginator(orig), false).getAll());
+                new SqlFieldsQuery("SELECT test.awaitLatch()").setQueryInitiatorId(orig), false).getAll());
 
         assertTrue(GridTestUtils.waitForCondition(() -> grid(0).context().query().querySqlFields(
-            new SqlFieldsQuery("SELECT originator FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll().size() == 2,
+            new SqlFieldsQuery("SELECT * FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll().size() == 2,
             1000));
 
         List<List<?>> res = grid(0).context().query().querySqlFields(
-            new SqlFieldsQuery("SELECT originator FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll();
+            new SqlFieldsQuery("SELECT initiator_id FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll();
 
         assertEquals(orig, res.get(0).get(0));
         assertNull(res.get(1).get(0));
@@ -100,7 +102,7 @@ public class RunningQueryInfoCheckOriginatorTest extends JdbcThinAbstractSelfTes
         TestSQLFunctions.reset();
 
         assertTrue(GridTestUtils.waitForCondition(() -> grid(0).context().query().querySqlFields(
-            new SqlFieldsQuery("SELECT originator FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false)
+            new SqlFieldsQuery("SELECT * FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false)
                 .getAll().size() == 1,
             1000));
     }
@@ -123,11 +125,11 @@ public class RunningQueryInfoCheckOriginatorTest extends JdbcThinAbstractSelfTes
         );
 
         assertTrue(GridTestUtils.waitForCondition(() -> grid(0).context().query().querySqlFields(
-            new SqlFieldsQuery("SELECT originator FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll().size() == 2,
+            new SqlFieldsQuery("SELECT * FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll().size() == 2,
             1000));
 
         List<List<?>> res = grid(0).context().query().querySqlFields(
-            new SqlFieldsQuery("SELECT originator FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll();
+            new SqlFieldsQuery("SELECT initiator_id FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll();
 
         String originator = (String)res.get(0).get(0);
 
@@ -137,7 +139,7 @@ public class RunningQueryInfoCheckOriginatorTest extends JdbcThinAbstractSelfTes
         TestSQLFunctions.reset();
 
         assertTrue(GridTestUtils.waitForCondition(() -> grid(0).context().query().querySqlFields(
-            new SqlFieldsQuery("SELECT originator FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false)
+            new SqlFieldsQuery("SELECT * FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false)
                 .getAll().size() == 1,
             1000));
     }
@@ -162,11 +164,11 @@ public class RunningQueryInfoCheckOriginatorTest extends JdbcThinAbstractSelfTes
         );
 
         assertTrue(GridTestUtils.waitForCondition(() -> grid(0).context().query().querySqlFields(
-            new SqlFieldsQuery("SELECT originator FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll().size() == 2,
+            new SqlFieldsQuery("SELECT * FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll().size() == 2,
             1000));
 
         List<List<?>> res = grid(0).context().query().querySqlFields(
-            new SqlFieldsQuery("SELECT originator FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll();
+            new SqlFieldsQuery("SELECT initiator_id FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll();
 
         String originator = (String)res.get(0).get(0);
 
@@ -176,7 +178,7 @@ public class RunningQueryInfoCheckOriginatorTest extends JdbcThinAbstractSelfTes
         TestSQLFunctions.reset();
 
         assertTrue(GridTestUtils.waitForCondition(() -> grid(0).context().query().querySqlFields(
-            new SqlFieldsQuery("SELECT originator FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false)
+            new SqlFieldsQuery("SELECT * FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false)
                 .getAll().size() == 1,
             1000));
     }
@@ -200,11 +202,11 @@ public class RunningQueryInfoCheckOriginatorTest extends JdbcThinAbstractSelfTes
         grid(1).cluster().forServers().ignite().compute().runAsync(job);
 
         assertTrue(GridTestUtils.waitForCondition(() -> grid(0).context().query().querySqlFields(
-            new SqlFieldsQuery("SELECT originator FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll().size() == 2,
+            new SqlFieldsQuery("SELECT * FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll().size() == 2,
             1000));
 
         List<List<?>> res = grid(0).context().query().querySqlFields(
-            new SqlFieldsQuery("SELECT originator FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll();
+            new SqlFieldsQuery("SELECT initiator_id FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll();
 
         String originator = (String)res.get(0).get(0);
 
@@ -214,7 +216,7 @@ public class RunningQueryInfoCheckOriginatorTest extends JdbcThinAbstractSelfTes
         TestSQLFunctions.reset();
 
         assertTrue(GridTestUtils.waitForCondition(() -> grid(0).context().query().querySqlFields(
-            new SqlFieldsQuery("SELECT originator FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false)
+            new SqlFieldsQuery("SELECT * FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false)
                 .getAll().size() == 1,
             1000));
     }

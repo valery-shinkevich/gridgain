@@ -44,8 +44,8 @@ public class QueryDescriptor {
     /** Batched flag. */
     private final boolean batched;
 
-    /** Orginator. */
-    private final String originator;
+    /** Query initiator identifier. */
+    private final String qryInitiatorId;
 
     /**
      * @param schemaName Schema name.
@@ -66,7 +66,7 @@ public class QueryDescriptor {
         boolean loc,
         boolean skipReducerOnUpdate,
         boolean batched,
-        String originator
+        String qryInitiatorId
     ) {
         this.schemaName = schemaName;
         this.sql = sql;
@@ -76,7 +76,7 @@ public class QueryDescriptor {
         this.loc = loc;
         this.skipReducerOnUpdate = skipReducerOnUpdate;
         this.batched = batched;
-        this.originator = originator;
+        this.qryInitiatorId = qryInitiatorId;
     }
 
     /**
@@ -138,8 +138,8 @@ public class QueryDescriptor {
     /**
      * @return Query's originator.
      */
-    public String originator() {
-        return originator;
+    public String queryInitiatorId() {
+        return qryInitiatorId;
     }
 
     /** {@inheritDoc} */

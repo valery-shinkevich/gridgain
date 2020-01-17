@@ -50,7 +50,7 @@ public class SqlFieldsQuery extends Query<List<?>> {
     private static final int DFLT_UPDATE_BATCH_SIZE = 1;
 
     /** Threaded query originator. */
-    private static ThreadLocal<String> threadedOriginator = new ThreadLocal<>();
+    private static ThreadLocal<String> threadedQryInitiatorId = new ThreadLocal<>();
 
     /** Do not remove. For tests only. */
     @SuppressWarnings("NonConstantFieldWithUpperCaseName")
@@ -95,7 +95,7 @@ public class SqlFieldsQuery extends Query<List<?>> {
 
     /** Query's originator string (client host+port, user name,
      * job name or any user's information about query initiator). */
-    private String originator;
+    private String qryInitiatorId;
 
     /**
      * Copy constructs SQL fields query.
@@ -114,7 +114,7 @@ public class SqlFieldsQuery extends Query<List<?>> {
         parts = qry.parts;
         schema = qry.schema;
         updateBatchSize = qry.updateBatchSize;
-        originator = qry.originator;
+        qryInitiatorId = qry.qryInitiatorId;
     }
 
     /**
@@ -418,21 +418,21 @@ public class SqlFieldsQuery extends Query<List<?>> {
     }
 
     /**
-     * @return Query's originator string (client host+port, user name,
+     * @return Query's initiator identifier string (client host+port, user name,
      *       job name or any user's information about query initiator).
      */
-    public String getOriginator() {
-        return originator;
+    public String getQueryInitiatorId() {
+        return qryInitiatorId;
     }
 
     /**
-     * @param originator Query's originator string (client host+port, user name,
+     * @param qryInitiatorId Query's initiator identifier string (client host+port, user name,
      *      job name or any user's information about query initiator).
      *
      * @return {@code this} for chaining.
      */
-    public SqlFieldsQuery setOriginator(String originator) {
-        this.originator = originator;
+    public SqlFieldsQuery setQueryInitiatorId(String qryInitiatorId) {
+        this.qryInitiatorId = qryInitiatorId;
 
         return this;
     }
@@ -449,22 +449,22 @@ public class SqlFieldsQuery extends Query<List<?>> {
      *
      * @param originator Query's originator string.
      */
-    public static void setThreadedOriginator(String originator) {
-        threadedOriginator.set(originator);
+    public static void setThreadedQueryInitiatorId(String originator) {
+        threadedQryInitiatorId.set(originator);
     }
 
     /**
      * Used at the job worker to clear originator for current thread.
      */
-    public static void resetThreadedOriginator() {
-        threadedOriginator.remove();
+    public static void resetThreadedQueryInitiatorId() {
+        threadedQryInitiatorId.remove();
     }
 
     /**
      * @return originator set up by the job worker.
      */
-    public static String threadedOriginator() {
-        return threadedOriginator.get();
+    public static String threadedQueryInitiatorId() {
+        return threadedQryInitiatorId.get();
     }
 
     /** {@inheritDoc} */

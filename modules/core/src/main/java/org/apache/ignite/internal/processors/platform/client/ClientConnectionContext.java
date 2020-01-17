@@ -152,7 +152,7 @@ public class ClientConnectionContext extends ClientListenerAbstractConnectionCon
 
         AuthorizationContext authCtx = authenticate(user, pwd);
 
-        initOriginator("cli");
+        initQueryInitiatorIdentifier("cli");
 
         currentVer = ver;
 

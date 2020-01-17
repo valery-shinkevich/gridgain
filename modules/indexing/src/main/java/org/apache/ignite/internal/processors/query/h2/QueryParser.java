@@ -734,7 +734,7 @@ public class QueryParser {
             qry.isLocal(),
             skipReducerOnUpdate,
             batched,
-            qry.getOriginator()
+            qry.getQueryInitiatorId()
         );
     }
 }

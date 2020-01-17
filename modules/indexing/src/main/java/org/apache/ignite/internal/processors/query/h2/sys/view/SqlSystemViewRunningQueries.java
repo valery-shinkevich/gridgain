@@ -43,7 +43,7 @@ public class SqlSystemViewRunningQueries extends SqlAbstractLocalSystemView {
             newColumn("LOCAL", Value.BOOLEAN),
             newColumn("START_TIME", Value.TIMESTAMP),
             newColumn("DURATION", Value.LONG),
-            newColumn("ORIGINATOR", Value.STRING)
+            newColumn("INITIATOR_ID", Value.STRING)
         );
     }
 
@@ -81,7 +81,7 @@ public class SqlSystemViewRunningQueries extends SqlAbstractLocalSystemView {
                     info.local(),
                     valueTimestampFromMillis(info.startTime()),
                     duration,
-                    info.originator()
+                    info.queryInitiatorId()
                 )
             );
         }
