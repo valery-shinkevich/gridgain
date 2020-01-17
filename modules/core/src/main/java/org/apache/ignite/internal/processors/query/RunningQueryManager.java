@@ -25,6 +25,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.GridKernalContext;
 import org.apache.ignite.internal.processors.cache.query.GridCacheQueryType;
@@ -119,7 +120,7 @@ public class RunningQueryManager {
         Long qryId = qryIdGen.incrementAndGet();
 
         if (originator == null)
-            originator = GridJobWorker.jobDescription();
+            originator = SqlFieldsQuery.threadedOriginator();
 
         GridRunningQueryInfo run = new GridRunningQueryInfo(
             qryId,

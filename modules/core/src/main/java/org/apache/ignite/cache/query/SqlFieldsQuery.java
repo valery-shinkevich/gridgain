@@ -444,6 +444,29 @@ public class SqlFieldsQuery extends Query<List<?>> {
         return new SqlFieldsQuery(this);
     }
 
+    /**
+     * Used at the Job worker to setup originator by default for current thread.
+     *
+     * @param originator Query's originator string.
+     */
+    public static void setThreadedOriginator(String originator) {
+        threadedOriginator.set(originator);
+    }
+
+    /**
+     * Used at the job worker to clear originator for current thread.
+     */
+    public static void resetThreadedOriginator() {
+        threadedOriginator.remove();
+    }
+
+    /**
+     * @return originator set up by the job worker.
+     */
+    public static String threadedOriginator() {
+        return threadedOriginator.get();
+    }
+
     /** {@inheritDoc} */
     @Override public String toString() {
         return S.toString(SqlFieldsQuery.class, this);

@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.compute.ComputeExecutionRejectedException;
 import org.apache.ignite.compute.ComputeJob;
@@ -87,9 +88,6 @@ public class GridJobWorker extends GridWorker implements GridTimeoutObject {
             return false;
         }
     };
-
-    /** Per-thread held flag. */
-    private static final ThreadLocal<String> JOB_DESCRIPTION = new ThreadLocal<>();
 
     /** Static logger to avoid re-creation. */
     private static final AtomicReference<IgniteLogger> logRef = new AtomicReference<>();
@@ -508,7 +506,7 @@ public class GridJobWorker extends GridWorker implements GridTimeoutObject {
         // Make sure flag is not set for current thread.
         HOLD.set(false);
 
-        JOB_DESCRIPTION.set(ses.getTaskName());
+        SqlFieldsQuery.setThreadedOriginator(ses.getTaskName());
 
         try {
             if (partsReservation != null) {
@@ -645,7 +643,7 @@ public class GridJobWorker extends GridWorker implements GridTimeoutObject {
             }
         }
         finally {
-            JOB_DESCRIPTION.remove();
+            SqlFieldsQuery.resetThreadedOriginator();
 
             if (partsReservation != null)
                 partsReservation.release();
@@ -1075,13 +1073,6 @@ public class GridJobWorker extends GridWorker implements GridTimeoutObject {
         assert jobId != null;
 
         return jobId.hashCode();
-    }
-
-    /**
-     * @return Description of job in current thread if available.
-     */
-    public static String jobDescription() {
-        return JOB_DESCRIPTION.get();
     }
 
     /** {@inheritDoc} */

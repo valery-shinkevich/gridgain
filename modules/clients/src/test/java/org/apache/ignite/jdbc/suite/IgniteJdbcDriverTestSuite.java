@@ -51,6 +51,7 @@ import org.apache.ignite.jdbc.thin.JdbcThinCacheToJdbcDataTypesCoverageTest;
 import org.apache.ignite.jdbc.thin.JdbcThinComplexDmlDdlCustomSchemaSelfTest;
 import org.apache.ignite.jdbc.thin.JdbcThinComplexDmlDdlSelfTest;
 import org.apache.ignite.jdbc.thin.JdbcThinComplexDmlDdlSkipReducerOnUpdateSelfTest;
+import org.apache.ignite.jdbc.thin.JdbcThinComplexQuerySelfTest;
 import org.apache.ignite.jdbc.thin.JdbcThinConnectionMultipleAddressesTest;
 import org.apache.ignite.jdbc.thin.JdbcThinConnectionMvccEnabledSelfTest;
 import org.apache.ignite.jdbc.thin.JdbcThinConnectionSSLTest;
@@ -112,6 +113,8 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
     QaJdbcTestSuite.class,
+
+    RunningQueryInfoCheckOriginatorTest.class,
 
     JdbcConnectionSelfTest.class,
     JdbcStatementSelfTest.class,
@@ -179,7 +182,7 @@ import org.junit.runners.Suite;
     JdbcThinResultSetSelfTest.class,
 
     JdbcThinStatementSelfTest.class,
-    RunningQueryInfoCheckOriginatorTest.class,
+    JdbcThinComplexQuerySelfTest.class,
     JdbcThinNoDefaultSchemaTest.class,
     JdbcThinSchemaCaseSelfTest.class,
     JdbcThinEmptyCacheSelfTest.class,
