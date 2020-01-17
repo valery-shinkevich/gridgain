@@ -21,6 +21,7 @@ import org.apache.ignite.internal.GridKernalContext;
 import org.apache.ignite.internal.processors.authentication.AuthorizationContext;
 import org.apache.ignite.internal.processors.authentication.IgniteAccessControlException;
 import org.apache.ignite.internal.processors.security.SecurityContext;
+import org.apache.ignite.internal.util.nio.GridNioSession;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.plugin.security.AuthenticationContext;
 import org.apache.ignite.plugin.security.SecurityCredentials;
@@ -38,6 +39,9 @@ public abstract class ClientListenerAbstractConnectionContext implements ClientL
     /** Kernal context. */
     protected final GridKernalContext ctx;
 
+    /** Nio session. */
+    protected final GridNioSession ses;
+
     /** Security context or {@code null} if security is disabled. */
     private SecurityContext secCtx;
 
@@ -47,14 +51,19 @@ public abstract class ClientListenerAbstractConnectionContext implements ClientL
     /** Authorization context. */
     private AuthorizationContext authCtx;
 
+    /** Originator. */
+    private String originator;
+
     /**
      * Constructor.
      *
      * @param ctx Kernal context.
      */
-    protected ClientListenerAbstractConnectionContext(GridKernalContext ctx, long connId) {
+    protected ClientListenerAbstractConnectionContext(GridKernalContext ctx, GridNioSession ses,
+        long connId) {
         this.ctx = ctx;
         this.connId = connId;
+        this.ses = ses;
     }
 
     /**
@@ -130,5 +139,21 @@ public abstract class ClientListenerAbstractConnectionContext implements ClientL
     @Override public void onDisconnected() {
         if (ctx.security().enabled())
             ctx.security().onSessionExpired(secCtx.subject().id());
+    }
+
+    /**
+     *
+     */
+    protected void initOriginator(String prefix) {
+        originator = prefix + ":" + ses.remoteAddress().toString();
+
+        if (authCtx != null)
+            originator += "@" + authCtx.userName();
+    }
+    /**
+     * @return Originator string.
+     */
+    public String originator() {
+        return originator;
     }
 }

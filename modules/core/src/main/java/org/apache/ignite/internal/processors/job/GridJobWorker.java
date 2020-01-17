@@ -88,6 +88,9 @@ public class GridJobWorker extends GridWorker implements GridTimeoutObject {
         }
     };
 
+    /** Per-thread held flag. */
+    private static final ThreadLocal<String> JOB_DESCRIPTION = new ThreadLocal<>();
+
     /** Static logger to avoid re-creation. */
     private static final AtomicReference<IgniteLogger> logRef = new AtomicReference<>();
 
@@ -505,6 +508,8 @@ public class GridJobWorker extends GridWorker implements GridTimeoutObject {
         // Make sure flag is not set for current thread.
         HOLD.set(false);
 
+        JOB_DESCRIPTION.set(ses.getTaskName());
+
         try {
             if (partsReservation != null) {
                 try {
@@ -640,6 +645,8 @@ public class GridJobWorker extends GridWorker implements GridTimeoutObject {
             }
         }
         finally {
+            JOB_DESCRIPTION.remove();
+
             if (partsReservation != null)
                 partsReservation.release();
         }
@@ -1068,6 +1075,13 @@ public class GridJobWorker extends GridWorker implements GridTimeoutObject {
         assert jobId != null;
 
         return jobId.hashCode();
+    }
+
+    /**
+     * @return Description of job in current thread if available.
+     */
+    public static String jobDescription() {
+        return JOB_DESCRIPTION.get();
     }
 
     /** {@inheritDoc} */

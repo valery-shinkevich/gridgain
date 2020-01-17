@@ -50,6 +50,9 @@ public class GridRunningQueryInfo {
     /** */
     private final QueryRunningFuture fut = new QueryRunningFuture();
 
+    /** Originator. */
+    private final String originator;
+
     /**
      * Constructor.
      *
@@ -61,6 +64,7 @@ public class GridRunningQueryInfo {
      * @param startTime Query start time.
      * @param cancel Query cancel.
      * @param loc Local query flag.
+     * @param originator Query's initiator description.
      */
     public GridRunningQueryInfo(
         Long id,
@@ -70,7 +74,8 @@ public class GridRunningQueryInfo {
         String schemaName,
         long startTime,
         GridQueryCancel cancel,
-        boolean loc
+        boolean loc,
+        String originator
     ) {
         this.id = id;
         this.nodeId = nodeId;
@@ -80,6 +85,7 @@ public class GridRunningQueryInfo {
         this.startTime = startTime;
         this.cancel = cancel;
         this.loc = loc;
+        this.originator = originator;
     }
 
     /**
@@ -160,5 +166,13 @@ public class GridRunningQueryInfo {
      */
     public boolean local() {
         return loc;
+    }
+
+    /**
+     * @return Query's originator string (client host+port, user name,
+     * job name or any user's information about query initiator).
+     */
+    public String originator() {
+        return originator;
     }
 }

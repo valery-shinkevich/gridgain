@@ -49,6 +49,9 @@ public class SqlFieldsQuery extends Query<List<?>> {
     /** Default value of the update internal batch size. */
     private static final int DFLT_UPDATE_BATCH_SIZE = 1;
 
+    /** Threaded query originator. */
+    private static ThreadLocal<String> threadedOriginator = new ThreadLocal<>();
+
     /** Do not remove. For tests only. */
     @SuppressWarnings("NonConstantFieldWithUpperCaseName")
     private static boolean DFLT_LAZY;
@@ -90,6 +93,10 @@ public class SqlFieldsQuery extends Query<List<?>> {
      */
     private int updateBatchSize = DFLT_UPDATE_BATCH_SIZE;
 
+    /** Query's originator string (client host+port, user name,
+     * job name or any user's information about query initiator). */
+    private String originator;
+
     /**
      * Copy constructs SQL fields query.
      *
@@ -107,6 +114,7 @@ public class SqlFieldsQuery extends Query<List<?>> {
         parts = qry.parts;
         schema = qry.schema;
         updateBatchSize = qry.updateBatchSize;
+        originator = qry.originator;
     }
 
     /**
@@ -405,6 +413,26 @@ public class SqlFieldsQuery extends Query<List<?>> {
      */
     public SqlFieldsQuery setUpdateBatchSize(int updateBatchSize) {
         this.updateBatchSize = updateBatchSize;
+
+        return this;
+    }
+
+    /**
+     * @return Query's originator string (client host+port, user name,
+     *       job name or any user's information about query initiator).
+     */
+    public String getOriginator() {
+        return originator;
+    }
+
+    /**
+     * @param originator Query's originator string (client host+port, user name,
+     *      job name or any user's information about query initiator).
+     *
+     * @return {@code this} for chaining.
+     */
+    public SqlFieldsQuery setOriginator(String originator) {
+        this.originator = originator;
 
         return this;
     }

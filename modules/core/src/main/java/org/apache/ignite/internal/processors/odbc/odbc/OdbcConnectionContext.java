@@ -61,9 +61,6 @@ public class OdbcConnectionContext extends ClientListenerAbstractConnectionConte
     /** Supported versions. */
     private static final Set<ClientListenerProtocolVersion> SUPPORTED_VERS = new HashSet<>();
 
-    /** Session. */
-    private final GridNioSession ses;
-
     /** Shutdown busy lock. */
     private final GridSpinBusyLock busyLock;
 
@@ -97,9 +94,8 @@ public class OdbcConnectionContext extends ClientListenerAbstractConnectionConte
      * @param maxCursors Maximum allowed cursors.
      */
     public OdbcConnectionContext(GridKernalContext ctx, GridNioSession ses, GridSpinBusyLock busyLock, long connId, int maxCursors) {
-        super(ctx, connId);
+        super(ctx, ses, connId);
 
-        this.ses = ses;
         this.busyLock = busyLock;
         this.maxCursors = maxCursors;
 
@@ -167,8 +163,10 @@ public class OdbcConnectionContext extends ClientListenerAbstractConnectionConte
             }
         };
 
+        initOriginator("odbc");
+
         handler = new OdbcRequestHandler(ctx, busyLock, sender, maxCursors, distributedJoins, enforceJoinOrder,
-            replicatedOnly, collocated, lazy, skipReducerOnUpdate, actx, nestedTxMode, ver);
+            replicatedOnly, collocated, lazy, skipReducerOnUpdate, actx, nestedTxMode, ver, this);
 
         parser = new OdbcMessageParser(ctx, ver);
 

@@ -976,6 +976,7 @@ public class JdbcRequestHandler implements ClientListenerRequestHandler {
         qry.setNestedTxMode(nestedTxMode);
         qry.setSchema(schemaName);
         qry.setMaxMemory(cliCtx.maxMemory());
+        qry.setOriginator(connCtx.originator());
 
         if (cliCtx.updateBatchSize() != null)
             qry.setUpdateBatchSize(cliCtx.updateBatchSize());

@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.ignite.internal.util.nio.GridNioSession;
 
 /**
  * Thin Client connection context.
@@ -95,8 +96,8 @@ public class ClientConnectionContext extends ClientListenerAbstractConnectionCon
      * @param connId Connection ID.
      * @param maxCursors Max active cursors.
      */
-    public ClientConnectionContext(GridKernalContext ctx, long connId, int maxCursors) {
-        super(ctx, connId);
+    public ClientConnectionContext(GridKernalContext ctx, GridNioSession ses, long connId, int maxCursors) {
+        super(ctx, ses, connId);
 
         this.maxCursors = maxCursors;
     }
@@ -150,6 +151,8 @@ public class ClientConnectionContext extends ClientListenerAbstractConnectionCon
         }
 
         AuthorizationContext authCtx = authenticate(user, pwd);
+
+        initOriginator("cli");
 
         currentVer = ver;
 
