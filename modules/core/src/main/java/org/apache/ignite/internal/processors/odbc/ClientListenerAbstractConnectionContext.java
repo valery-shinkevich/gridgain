@@ -145,7 +145,7 @@ public abstract class ClientListenerAbstractConnectionContext implements ClientL
      *
      */
     protected void initQueryInitiatorIdentifier(String prefix) {
-        qryInitiatorId = prefix + ":" + ses.remoteAddress().toString();
+        qryInitiatorId = prefix + ":" + ses.remoteAddress().getHostString() + ":" + ses.remoteAddress().getPort();
 
         if (authCtx != null)
             qryInitiatorId += "@" + authCtx.userName();

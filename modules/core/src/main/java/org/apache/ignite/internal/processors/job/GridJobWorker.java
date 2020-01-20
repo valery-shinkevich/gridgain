@@ -506,7 +506,7 @@ public class GridJobWorker extends GridWorker implements GridTimeoutObject {
         // Make sure flag is not set for current thread.
         HOLD.set(false);
 
-        SqlFieldsQuery.setThreadedQueryInitiatorId(ses.getTaskName());
+        SqlFieldsQuery.setThreadedQueryInitiatorId("task:" + ses.getTaskName() + ":" + getJobId());
 
         try {
             if (partsReservation != null) {

@@ -117,7 +117,14 @@ public class JdbcStatement implements Statement {
         boolean loc = nodeId == null;
         JdbcQueryMultipleStatementsTask qryTask;
 
-        if (!conn.isMultipleStatementsAllowed() && conn.isMultipleStatementsTaskV2Supported()) {
+        if (conn.isMultipleStatementsTaskV3Supported()) {
+            qryTask = new JdbcQueryMultipleStatementsTaskV3(loc ? ignite : null, conn.schemaName(),
+                sql, isQuery, loc, getArgs(), fetchSize, conn.getQueryMaxMemory(), conn.isLocalQuery(),
+                conn.isCollocatedQuery(), conn.isDistributedJoins(), conn.isEnforceJoinOrder(), conn.isLazy(),
+                conn.isMultipleStatementsAllowed(),
+                "jdbc-v2:" + F.first(conn.ignite().cluster().localNode().addresses()));
+        }
+        else if (!conn.isMultipleStatementsAllowed() && conn.isMultipleStatementsTaskV2Supported()) {
             qryTask = new JdbcQueryMultipleStatementsNotAllowTask(loc ? ignite : null, conn.schemaName(),
                 sql, isQuery, loc, getArgs(), fetchSize, conn.getQueryMaxMemory(), conn.isLocalQuery(),
                 conn.isCollocatedQuery(), conn.isDistributedJoins(), conn.isEnforceJoinOrder(), conn.isLazy());
@@ -246,6 +253,8 @@ public class JdbcStatement implements Statement {
 
             it.remove();
         }
+
+        closeResults();
 
         closed = true;
     }

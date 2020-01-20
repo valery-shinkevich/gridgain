@@ -197,7 +197,7 @@ public class JdbcConnectionContext extends ClientListenerAbstractConnectionConte
             actx = authenticate(user, passwd);
         }
 
-        initQueryInitiatorIdentifier("jdbc");
+        initQueryInitiatorIdentifier("jdbc-thin");
 
         parser = new JdbcMessageParser(ctx, ver);
 

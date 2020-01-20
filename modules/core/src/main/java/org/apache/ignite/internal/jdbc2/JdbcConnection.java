@@ -109,7 +109,11 @@ public class JdbcConnection implements Connection {
 
     /** Multiple statements V2 task supported since version. */
     private static final IgniteProductVersion MULTIPLE_STATEMENTS_TASK_V2_SUPPORTED_SINCE =
-        IgniteProductVersion.fromString("8.8.0");
+        IgniteProductVersion.fromString("8.7.8");
+
+    /** Multiple statements V2 task supported since version. */
+    private static final IgniteProductVersion MULTIPLE_STATEMENTS_TASK_V3_SUPPORTED_SINCE =
+        IgniteProductVersion.fromString("8.7.11");
 
     /**
      * Ignite nodes cache.
@@ -880,6 +884,13 @@ public class JdbcConnection implements Connection {
      */
     boolean isMultipleStatementsTaskV2Supported() {
         return U.isOldestNodeVersionAtLeast(MULTIPLE_STATEMENTS_TASK_V2_SUPPORTED_SINCE, ignite.cluster().nodes());
+    }
+
+    /**
+     * @return {@code true} if multiple statements allowed, {@code false} otherwise.
+     */
+    boolean isMultipleStatementsTaskV3Supported() {
+        return U.isOldestNodeVersionAtLeast(MULTIPLE_STATEMENTS_TASK_V3_SUPPORTED_SINCE, ignite.cluster().nodes());
     }
 
     /**
