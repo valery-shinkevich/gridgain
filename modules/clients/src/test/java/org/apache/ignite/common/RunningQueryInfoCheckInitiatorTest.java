@@ -27,6 +27,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.regex.Pattern;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.Ignition;
+import org.apache.ignite.cache.query.FieldsQueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.cache.query.annotations.QuerySqlFunction;
 import org.apache.ignite.client.IgniteClient;
@@ -100,6 +101,34 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
 
         checkThereAreNoRunningQueries(grid(0), 2000);
     }
+
+    /**
+     * @throws Exception If failed.
+     */
+    @Test
+    public void testUserMultipleStatementsDefinedInitiatorId() throws Exception {
+        final String initiatorId = "TestUserSpecifiedOriginator";
+
+        GridTestUtils.runAsync(() -> {
+            List<FieldsQueryCursor<List<?>>> curs = grid(0).context().query().querySqlFields(
+                new SqlFieldsQuery("SELECT 'qry0', test.awaitLatch(); SELECT 'qry1', test.awaitLatch()")
+                    .setQueryInitiatorId(initiatorId), false, false);
+
+            for (FieldsQueryCursor<List<?>> cur : curs)
+                cur.getAll();
+        });
+
+        assertEquals(initiatorId, initiatorId(grid(0), "qry0", 1000));
+
+        TestSQLFunctions.reset();
+
+        assertEquals(initiatorId, initiatorId(grid(0), "qry1", 1000));
+
+        TestSQLFunctions.reset();
+
+        checkThereAreNoRunningQueries(grid(0), 2000);
+    }
+
 
     /**
      * @throws Exception If failed.
@@ -279,9 +308,11 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
          * Recreate latches. Old latches are released.
          */
         static void reset() {
-            latch.countDown();
+            CountDownLatch latchOld = latch;
 
             latch = new CountDownLatch(1);
+
+            latchOld.countDown();
         }
 
         /**
