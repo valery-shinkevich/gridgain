@@ -18,6 +18,7 @@ package org.apache.ignite.common;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
@@ -194,9 +195,14 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
 
         GridTestUtils.runAsync(() -> {
                 try (Connection conn = DriverManager.getConnection(
-                    CFG_URL_PREFIX +"nodeId=" + grid0NodeId + "@modules/clients/src/test/config/jdbc-config.xml")) {
+                    CFG_URL_PREFIX + "nodeId=" + grid0NodeId + "@modules/clients/src/test/config/jdbc-config.xml")) {
                     try (Statement stmt = conn.createStatement()) {
-                        stmt.executeQuery("SELECT test.awaitLatch()");
+                        try (ResultSet rs = stmt.executeQuery("SELECT test.awaitLatch()")) {
+                            // Read results: workaround for leak cursor GG-27123
+                            // Remove after fix.
+                            while (rs.next())
+                                ;
+                        }
                     }
                 }
                 catch (SQLException e) {
@@ -212,7 +218,7 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
 
         TestSQLFunctions.reset();
 
-        checkThereAreNoRunningQueries(grid(0), 2000000);
+        checkThereAreNoRunningQueries(grid(0), 2000);
     }
 
     /**
@@ -226,7 +232,7 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
 
         while (true) {
             if (U.currentTimeMillis() - t0 > timeout)
-                fail ("Timeout. Cannot find query with: " + sqlMatch);
+                fail("Timeout. Cannot find query with: " + sqlMatch);
 
             List<List<?>> res = node.context().query().querySqlFields(
                 new SqlFieldsQuery("SELECT sql, initiator_id FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll();
@@ -255,7 +261,7 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
                 return;
 
             if (U.currentTimeMillis() - t0 > timeout) {
-                fail ("Timeout. There are unexpected running queries: " + res);
+                fail("Timeout. There are unexpected running queries: " + res);
             }
         }
     }
@@ -275,8 +281,6 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
         static void reset() {
             latch.countDown();
 
-            log.info("+++ reset " + latch);
-
             latch = new CountDownLatch(1);
         }
 
@@ -288,9 +292,8 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
         @QuerySqlFunction
         public static long awaitLatch() {
             try {
-                log.info("+++ AWAIT " + latch);
                 latch.await();
-                log.info("+++ AWAIT DONE");
+                log.info("+++ latch -");
             }
             catch (Exception ignored) {
                 // No-op.

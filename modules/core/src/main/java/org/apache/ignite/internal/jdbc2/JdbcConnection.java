@@ -113,7 +113,7 @@ public class JdbcConnection implements Connection {
 
     /** Multiple statements V2 task supported since version. */
     private static final IgniteProductVersion MULTIPLE_STATEMENTS_TASK_V3_SUPPORTED_SINCE =
-        IgniteProductVersion.fromString("8.7.11");
+        IgniteProductVersion.fromString("8.7.12");
 
     /**
      * Ignite nodes cache.
