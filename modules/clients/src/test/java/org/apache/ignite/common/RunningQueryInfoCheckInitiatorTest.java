@@ -99,14 +99,14 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
 
         TestSQLFunctions.reset();
 
-        checkThereAreNoRunningQueries(grid(0), 2000);
+        checkRunningQueriesCount(grid(0), 0, 2000);
     }
 
     /**
      * @throws Exception If failed.
      */
     @Test
-    public void testUserMultipleStatementsDefinedInitiatorId() throws Exception {
+    public void testMultipleStatementsUserDefinedInitiatorId() throws Exception {
         final String initiatorId = "TestUserSpecifiedOriginator";
 
         GridTestUtils.runAsync(() -> {
@@ -124,9 +124,11 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
 
         assertEquals(initiatorId, initiatorId(grid(0), "qry1", 1000));
 
+        checkRunningQueriesCount(grid(0), 1, 1000);
+
         TestSQLFunctions.reset();
 
-        checkThereAreNoRunningQueries(grid(0), 2000);
+        checkRunningQueriesCount(grid(0), 0, 1000);
     }
 
 
@@ -154,7 +156,7 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
 
         TestSQLFunctions.reset();
 
-        checkThereAreNoRunningQueries(grid(0), 2000);
+        checkRunningQueriesCount(grid(0), 0, 1000);
     }
 
     /**
@@ -183,7 +185,7 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
 
         TestSQLFunctions.reset();
 
-        checkThereAreNoRunningQueries(grid(0), 2000);
+        checkRunningQueriesCount(grid(0), 0, 1000);
     }
 
     /**
@@ -196,7 +198,6 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
             Ignite ign;
 
             @Override public void run() {
-                System.out.println(Thread.currentThread().getName() + " +++ ");
                 ((IgniteEx)ign).context().query().querySqlFields(
                     new SqlFieldsQuery("SELECT test.awaitLatch()"), false).getAll();
             }
@@ -212,7 +213,7 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
 
         TestSQLFunctions.reset();
 
-        checkThereAreNoRunningQueries(grid(0), 2000);
+        checkRunningQueriesCount(grid(0), 0, 1000);
     }
 
     /**
@@ -247,7 +248,7 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
 
         TestSQLFunctions.reset();
 
-        checkThereAreNoRunningQueries(grid(0), 2000);
+        checkRunningQueriesCount(grid(0), 0, 2000);
     }
 
     /**
@@ -279,14 +280,14 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
      * @param node Noe to check running queries.
      * @param timeout Timeout to finish running queries.
      */
-    private void checkThereAreNoRunningQueries(IgniteEx node, int timeout) {
+    private void checkRunningQueriesCount(IgniteEx node, int expectedQryCount, int timeout) {
         long t0 = U.currentTimeMillis();
 
         while (true) {
             List<List<?>> res = node.context().query().querySqlFields(
                 new SqlFieldsQuery("SELECT * FROM sys.LOCAL_SQL_RUNNING_QUERIES"), false).getAll();
 
-            if (res.size() == 1)
+            if (res.size() == expectedQryCount + 1)
                 return;
 
             if (U.currentTimeMillis() - t0 > timeout) {
@@ -324,7 +325,6 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
         public static long awaitLatch() {
             try {
                 latch.await();
-                log.info("+++ latch -");
             }
             catch (Exception ignored) {
                 // No-op.
