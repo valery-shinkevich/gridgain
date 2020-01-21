@@ -194,6 +194,9 @@ public class JdbcConnection implements Connection {
     /** Statements. */
     final Set<JdbcStatement> statements = new HashSet<>();
 
+    /** Query initiator ID. */
+    private final String qryInitiatorId;
+
     /**
      * Creates new connection.
      *
@@ -267,6 +270,8 @@ public class JdbcConnection implements Connection {
                 if (schemaName == null)
                     schemaName = QueryUtils.DFLT_SCHEMA;
             }
+
+            qryInitiatorId = "jdbc-v2:" + F.first(ignite.cluster().localNode().addresses()) + ":" + ignite.name();
         }
         catch (Exception e) {
             close();
@@ -958,6 +963,13 @@ public class JdbcConnection implements Connection {
      */
     JdbcStatement createStatement0() throws SQLException {
         return (JdbcStatement)createStatement();
+    }
+
+    /**
+     * @return Query initiator ID.
+     */
+    String queryInitiatorId() {
+        return qryInitiatorId;
     }
 
     /**

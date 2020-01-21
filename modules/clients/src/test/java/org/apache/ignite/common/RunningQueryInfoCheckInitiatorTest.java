@@ -124,11 +124,11 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
 
         assertEquals(initiatorId, initiatorId(grid(0), "qry1", 1000));
 
-        checkRunningQueriesCount(grid(0), 1, 1000);
+        checkRunningQueriesCount(grid(0), 1, 2000);
 
         TestSQLFunctions.reset();
 
-        checkRunningQueriesCount(grid(0), 0, 1000);
+        checkRunningQueriesCount(grid(0), 0, 2000);
     }
 
 
@@ -244,7 +244,7 @@ public class RunningQueryInfoCheckInitiatorTest extends JdbcThinAbstractSelfTest
         String initiatorId = initiatorId(grid(0), "awaitLatch", 5000);
 
         assertTrue("Invalid initiator ID: " + initiatorId,
-            Pattern.compile("jdbc-v2:127\\.0\\.0\\.1").matcher(initiatorId).matches());
+            Pattern.compile("jdbc-v2:127\\.0\\.0\\.1:sqlGrid-ignite-jdbc-driver-[0-9a-fA-F-]+").matcher(initiatorId).matches());
 
         TestSQLFunctions.reset();
 

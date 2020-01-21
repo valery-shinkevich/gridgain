@@ -121,8 +121,7 @@ public class JdbcStatement implements Statement {
             qryTask = new JdbcQueryMultipleStatementsTaskV3(loc ? ignite : null, conn.schemaName(),
                 sql, isQuery, loc, getArgs(), fetchSize, conn.getQueryMaxMemory(), conn.isLocalQuery(),
                 conn.isCollocatedQuery(), conn.isDistributedJoins(), conn.isEnforceJoinOrder(), conn.isLazy(),
-                conn.isMultipleStatementsAllowed(),
-                "jdbc-v2:" + F.first(conn.ignite().cluster().localNode().addresses()));
+                conn.isMultipleStatementsAllowed(), conn.queryInitiatorId());
         }
         else if (!conn.isMultipleStatementsAllowed() && conn.isMultipleStatementsTaskV2Supported()) {
             qryTask = new JdbcQueryMultipleStatementsNotAllowTask(loc ? ignite : null, conn.schemaName(),
