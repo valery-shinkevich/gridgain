@@ -551,10 +551,8 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
      * @return triple with collections of FullPageIds obtained from each PageMemory, overall number of dirty
      * pages, and flag defines at least one user page became a dirty since last checkpoint.
      */
-    private T3<Collection<T2<PageMemoryEx, GridMultiCollectionWrapper<FullPageId>>>, Integer, Boolean> beginAllCheckpoints(
-        IgniteInternalFuture allowToReplace
-    ) {
-        Collection<T2<PageMemoryEx, GridMultiCollectionWrapper<FullPageId>>> res =
+    private CheckpointPagesInfoHolder beginAllCheckpoints(IgniteInternalFuture allowToReplace) {
+        Collection<Map.Entry<PageMemoryEx, GridMultiCollectionWrapper<FullPageId>>> res =
             new ArrayList(dataRegions().size());
 
         int pagesNum = 0;
@@ -580,7 +578,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
         currCheckpointPagesCnt = pagesNum;
 
-        return new T3<>(res, pagesNum, hasUserDirtyPages);
+        return new CheckpointPagesInfoHolder(res, pagesNum, hasUserDirtyPages);
     }
 
     /**
@@ -3273,16 +3271,11 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
         Collection<DataRegion> regions = dataRegions();
 
-        Collection<GridMultiCollectionWrapper<FullPageId>> res = new ArrayList(regions.size());
-
-        GridFinishedFuture finishedFuture = new GridFinishedFuture();
-
-        T3<Collection<T2<PageMemoryEx, GridMultiCollectionWrapper<FullPageId>>>, Integer, Boolean> cpPagesTriple =
-            beginAllCheckpoints(finishedFuture);
+        CheckpointPagesInfoHolder cpPagesHolder = beginAllCheckpoints(new GridFinishedFuture());
 
         // Sort and split all dirty pages set to several stripes.
         GridConcurrentMultiPairQueue<PageMemoryEx, FullPageId> pages =
-            splitAndSortCpPagesIfNeeded(cpPagesTriple);
+            splitAndSortCpPagesIfNeeded(cpPagesHolder);
 
         // Identity stores set for future fsync.
         Collection<PageStore> updStores = new GridConcurrentHashSet<>();
@@ -3314,6 +3307,8 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
                 T2<PageMemoryEx, FullPageId> curPageId = pages.poll();
 
+                int pagesWritten = 0;
+
                 try {
                     while (curPageId != null) {
                         // Fail-fast break if some exception occurred.
@@ -3329,7 +3324,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
                         curPageId = pages.poll();
 
                         // Add number of handled pages.
-                        cpPagesCnt.incrementAndGet();
+                        pagesWritten++;
                     }
                 }
                 catch (IgniteCheckedException e) {
@@ -3337,6 +3332,8 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
                     writePagesError.compareAndSet(null, e);
                 }
+
+                cpPagesCnt.addAndGet(pagesWritten);
             });
         }
 
@@ -4305,7 +4302,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
             IgniteFuture snapFut = null;
 
-            T3<Collection<T2<PageMemoryEx, GridMultiCollectionWrapper<FullPageId>>>, Integer, Boolean> cpPagesTriple;
+            CheckpointPagesInfoHolder cpPagesTriple;
 
             int dirtyPagesCount;
 
@@ -4352,9 +4349,9 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
                 //There are allowable to replace pages only after checkpoint entry was stored to disk.
                 cpPagesTriple = beginAllCheckpoints(curr.futureFor(MARKER_STORED_TO_DISK));
 
-                dirtyPagesCount = cpPagesTriple.get2();
+                dirtyPagesCount = cpPagesTriple.pagesNum();
 
-                hasUserPages = cpPagesTriple.get3();
+                hasUserPages = !cpPagesTriple.onlySystemPages();
 
                 hasPartitionsToDestroy = !curr.destroyQueue.pendingReqs.isEmpty();
 
@@ -4813,23 +4810,23 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
      * @param cpPages Checkpoint pages with overall count and user pages info.
      */
     private GridConcurrentMultiPairQueue<PageMemoryEx, FullPageId> splitAndSortCpPagesIfNeeded(
-        T3<Collection<T2<PageMemoryEx, GridMultiCollectionWrapper<FullPageId>>>, Integer, Boolean> cpPages
+        CheckpointPagesInfoHolder cpPages
     ) throws IgniteCheckedException {
         Set<T2<PageMemoryEx, FullPageId[]>> cpPagesPerRegion = new HashSet<>();
 
         int realPagesArrSize = 0;
 
-        int totalPagesCnt = cpPages.get2();
+        int totalPagesCnt = cpPages.pagesNum();
 
-        for (T2<PageMemoryEx, GridMultiCollectionWrapper<FullPageId>> regPages : cpPages.get1()) {
-            FullPageId[] pages = new FullPageId[regPages.get2().size()];
+        for (Map.Entry<PageMemoryEx, GridMultiCollectionWrapper<FullPageId>> regPages : cpPages.cpPages()) {
+            FullPageId[] pages = new FullPageId[regPages.getValue().size()];
 
             int pagePos = 0;
 
-            for (int i = 0; i < regPages.get2().collectionsSize(); i++) {
-                for (FullPageId page : regPages.get2().innerCollection(i)) {
+            for (int i = 0; i < regPages.getValue().collectionsSize(); i++) {
+                for (FullPageId page : regPages.getValue().innerCollection(i)) {
                     if (realPagesArrSize++ == totalPagesCnt)
-                        throw new AssertionError("Incorrect estimated dirty pages number: " + cpPages.get2());
+                        throw new AssertionError("Incorrect estimated dirty pages number: " + cpPages.pagesNum());
 
                     pages[pagePos++] = page;
                 }
@@ -4837,19 +4834,14 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
             // Some pages may have been already replaced.
             if (pagePos != pages.length)
-                cpPagesPerRegion.add(new T2<>(regPages.get1(), Arrays.copyOf(pages, pagePos)));
+                cpPagesPerRegion.add(new T2<>(regPages.getKey(), Arrays.copyOf(pages, pagePos)));
             else
-                cpPagesPerRegion.add(new T2<>(regPages.get1(), pages));
+                cpPagesPerRegion.add(new T2<>(regPages.getKey(), pages));
         }
 
         if (persistenceCfg.getCheckpointWriteOrder() == CheckpointWriteOrder.SEQUENTIAL) {
-            Comparator<FullPageId> cmp = (o1, o2) -> {
-                int cmp1 = Long.compare(o1.groupId(), o2.groupId());
-                if (cmp1 != 0)
-                    return cmp1;
-
-                return Long.compare(o1.effectivePageId(), o2.effectivePageId());
-            };
+            Comparator<FullPageId> cmp = Comparator.comparingInt(FullPageId::groupId)
+                .thenComparingLong(FullPageId::effectivePageId);
 
             for (T2<PageMemoryEx, FullPageId[]> pagesPerReg : cpPagesPerRegion) {
                 if (pagesPerReg.getValue().length >= parallelSortThreshold)
@@ -6053,6 +6045,43 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
         /** */
         private CheckpointReadLockTimeoutException(String msg) {
             super(msg);
+        }
+    }
+
+    /** Current checkpoint pages information. */
+    private static class CheckpointPagesInfoHolder {
+        /** If {@code true} there are user pages in checkpoint. */
+        private final boolean hasUserDirtyPages;
+
+        /** Total pages count in cp. */
+        private final int pagesNum;
+
+        /** Collection of pages per PageMemory distribution. */
+        private final Collection<Map.Entry<PageMemoryEx, GridMultiCollectionWrapper<FullPageId>>> cpPages;
+
+        /** */
+        private CheckpointPagesInfoHolder(
+            Collection<Map.Entry<PageMemoryEx, GridMultiCollectionWrapper<FullPageId>>> pages,
+            int num,
+            boolean hasUserPages) {
+            cpPages = pages;
+            pagesNum = num;
+            hasUserDirtyPages = hasUserPages;
+        }
+
+        /** If {@code true} there are user pages in checkpoint. */
+        private boolean onlySystemPages() {
+            return !hasUserDirtyPages;
+        }
+
+        /** Total pages count in cp. */
+        private int pagesNum() {
+            return pagesNum;
+        }
+
+        /** Collection of pages per PageMemory distribution. */
+        private Collection<Map.Entry<PageMemoryEx, GridMultiCollectionWrapper<FullPageId>>> cpPages() {
+            return cpPages;
         }
     }
 }
