@@ -3308,12 +3308,10 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
                 GridConcurrentMultiPairQueue.Result<PageMemoryEx, FullPageId> res =
                     new GridConcurrentMultiPairQueue.Result<>();
 
-                pages.next(res);
-
                 int pagesWritten = 0;
 
                 try {
-                    while (res.getKey() != null) {
+                    while (pages.next(res)) {
                         // Fail-fast break if some exception occurred.
                         if (writePagesError.get() != null)
                             break;
@@ -3323,8 +3321,6 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
                         // Write page content to page store via pageStoreWriter.
                         // Tracker is null, because no need to track checkpoint metrics on recovery.
                         pageMem.checkpointWritePage(res.getValue(), writePageBuf, pageStoreWriter, null);
-
-                        pages.next(res);
 
                         // Add number of handled pages.
                         pagesWritten++;
@@ -4993,9 +4989,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
             GridConcurrentMultiPairQueue.Result<PageMemoryEx, FullPageId> res =
                 new GridConcurrentMultiPairQueue.Result<>();
 
-            writePageIds.next(res);
-
-            while (res.getKey() != null) {
+            while (writePageIds.next(res)) {
                 if (checkpointer.shutdownNow)
                     break;
 
@@ -5025,8 +5019,6 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
                         pageMem.checkpointWritePage(cpPageId, tmpWriteBuf, pageStoreWriter, tracker);
                     }
                 }
-
-                writePageIds.next(res);
             }
 
             return pagesToRetry.isEmpty() ?

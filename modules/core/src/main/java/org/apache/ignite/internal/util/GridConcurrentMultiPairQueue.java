@@ -148,13 +148,13 @@ public class GridConcurrentMultiPairQueue<K, V> {
     }
 
     /** Return next initialized input class instance. */
-    public void next(Result<K, V> res) {
+    public boolean next(Result<K, V> res) {
         int absPos = pos.getAndIncrement();
 
         if (absPos >= maxPos) {
             res.set(null, null, 0);
 
-            return;
+            return false;
         }
 
         int segment = res.getSegment();
@@ -170,6 +170,8 @@ public class GridConcurrentMultiPairQueue<K, V> {
         K key = keysArr[segment];
 
         res.set(key, vals[segment][relPos], segment);
+
+        return true;
     }
 
     /**
