@@ -4824,7 +4824,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
             for (int i = 0; i < regPages.getValue().collectionsSize(); i++) {
                 for (FullPageId page : regPages.getValue().innerCollection(i)) {
-                    if (++realPagesArrSize == totalPagesCnt)
+                    if (realPagesArrSize++ == totalPagesCnt)
                         throw new AssertionError("Incorrect estimated dirty pages number: " + cpPages.pagesNum());
 
                     pages[pagePos++] = page;
