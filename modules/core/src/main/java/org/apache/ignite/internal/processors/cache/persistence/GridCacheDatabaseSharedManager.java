@@ -4976,7 +4976,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
         private GridConcurrentMultiPairQueue<PageMemoryEx, FullPageId> writePages(
             GridConcurrentMultiPairQueue<PageMemoryEx, FullPageId> writePageIds
         ) throws IgniteCheckedException {
-            Map<PageMemoryEx, List<FullPageId>> pagesToRetry = new HashMap<>();
+            Map<PageMemoryEx, List<FullPageId>> pagesToRetry = new ConcurrentHashMap<>();
 
             CheckpointMetricsTracker tracker = persStoreMetrics.metricsEnabled() ? this.tracker : null;
 
