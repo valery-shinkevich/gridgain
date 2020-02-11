@@ -171,7 +171,6 @@ import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.CI1;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.T2;
-import org.apache.ignite.internal.util.typedef.T3;
 import org.apache.ignite.internal.util.typedef.X;
 import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.LT;
@@ -3305,30 +3304,33 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
                 writePageBuf.order(ByteOrder.nativeOrder());
 
-                T2<PageMemoryEx, FullPageId> curPageId = pages.poll();
+                GridConcurrentMultiPairQueue.Res<PageMemoryEx, FullPageId> res =
+                    new GridConcurrentMultiPairQueue.Res<>();
+
+                pages.next(res);
 
                 int pagesWritten = 0;
 
                 try {
-                    while (curPageId != null) {
+                    while (res.getKey() != null) {
                         // Fail-fast break if some exception occurred.
                         if (writePagesError.get() != null)
                             break;
 
-                        PageMemoryEx pageMem = curPageId.get1();
+                        PageMemoryEx pageMem = res.getKey();
 
                         // Write page content to page store via pageStoreWriter.
                         // Tracker is null, because no need to track checkpoint metrics on recovery.
-                        pageMem.checkpointWritePage(curPageId.get2(), writePageBuf, pageStoreWriter, null);
+                        pageMem.checkpointWritePage(res.getValue(), writePageBuf, pageStoreWriter, null);
 
-                        curPageId = pages.poll();
+                        pages.next(res);
 
                         // Add number of handled pages.
                         pagesWritten++;
                     }
                 }
                 catch (IgniteCheckedException e) {
-                    U.error(log, "Failed to write page to pageStore, pageId=" + curPageId);
+                    U.error(log, "Failed to write page to pageStore: " + res);
 
                     writePagesError.compareAndSet(null, e);
                 }
@@ -4980,17 +4982,20 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
             boolean throttlingEnabled = resolveThrottlingPolicy() != PageMemoryImpl.ThrottlingPolicy.DISABLED;
 
-            T2<PageMemoryEx, FullPageId> pageWithReg = writePageIds.poll();
+            GridConcurrentMultiPairQueue.Res<PageMemoryEx, FullPageId> res =
+                new GridConcurrentMultiPairQueue.Res<>();
 
-            while (pageWithReg != null) {
+            writePageIds.next(res);
+
+            while (res.getKey() != null) {
                 if (checkpointer.shutdownNow)
                     break;
 
                 beforePageWrite.run();
 
-                FullPageId fullId = pageWithReg.get2();
+                FullPageId fullId = res.getValue();
 
-                PageMemoryEx pageMem = pageWithReg.get1();
+                PageMemoryEx pageMem = res.getKey();
 
                 snapshotMgr.beforePageWrite(fullId);
 
@@ -5013,7 +5018,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
                     }
                 }
 
-                pageWithReg = writePageIds.poll();
+                writePageIds.next(res);
             }
 
             return pagesToRetry.isEmpty() ?

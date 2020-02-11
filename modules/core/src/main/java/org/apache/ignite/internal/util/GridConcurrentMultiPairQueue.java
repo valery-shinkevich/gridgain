@@ -16,6 +16,8 @@
 
 package org.apache.ignite.internal.util;
 
+import org.apache.ignite.internal.pagemem.FullPageId;
+import org.apache.ignite.internal.processors.cache.persistence.pagemem.PageMemoryEx;
 import org.apache.ignite.internal.util.typedef.T2;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,7 +125,7 @@ public class GridConcurrentMultiPairQueue<K, V> {
      *
      * @return the head of this queue, or {@code null} if this queue is empty
      */
-    public @Nullable T2<K, V> poll() {
+    private @Nullable T2<K, V> poll() {
         long absPos = pos.getAndIncrement();
 
         if (absPos >= maxPos)
@@ -147,6 +149,30 @@ public class GridConcurrentMultiPairQueue<K, V> {
     }
 
     /**
+
+     */
+    public void next(Res<K, V> res) {
+        long absPos = pos.getAndIncrement();
+
+        if (absPos >= maxPos)
+            res.set(null, null, 0);
+
+        int segment = res.getSegment();
+
+        if (absPos > lenSeq[segment]) {
+            segment = Arrays.binarySearch(lenSeq, absPos);
+
+            segment = segment < 0 ? -segment - 1 : segment;
+        }
+
+        int relPos = segment == 0 ? (int)absPos : (int)(absPos - lenSeq[segment - 1] - 1);
+
+        K key = keysArr[segment];
+
+        res.set(key, vals[segment][relPos], segment);
+    }
+
+    /**
      * @return {@code true} if empty.
      */
     public boolean isEmpty() {
@@ -158,5 +184,36 @@ public class GridConcurrentMultiPairQueue<K, V> {
      */
     public int initialSize() {
         return maxPos;
+    }
+
+    /** */
+    public static class Res<K, V> {
+        int segment;
+
+        K pageMem;
+
+        V fullPageId;
+
+        public void set(K pageMem, V fullPageId, int seg) {
+            this.pageMem = pageMem;
+            this.fullPageId = fullPageId;
+            segment = seg;
+        }
+
+        public int getSegment() {
+            return segment;
+        }
+
+        public K getKey() {
+            return pageMem;
+        }
+
+        public V getValue() {
+            return fullPageId;
+        }
+
+        @Override public String toString() {
+            return "pageMem=" + pageMem + ", fullPageId=" + fullPageId;
+        }
     }
 }
