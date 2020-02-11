@@ -48,9 +48,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.ForkJoinWorkerThread;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
@@ -3304,8 +3305,8 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
                 writePageBuf.order(ByteOrder.nativeOrder());
 
-                GridConcurrentMultiPairQueue.Res<PageMemoryEx, FullPageId> res =
-                    new GridConcurrentMultiPairQueue.Res<>();
+                GridConcurrentMultiPairQueue.Result<PageMemoryEx, FullPageId> res =
+                    new GridConcurrentMultiPairQueue.Result<>();
 
                 pages.next(res);
 
@@ -4827,7 +4828,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
             for (int i = 0; i < regPages.getValue().collectionsSize(); i++) {
                 for (FullPageId page : regPages.getValue().innerCollection(i)) {
-                    if (realPagesArrSize++ == totalPagesCnt)
+                    if (++realPagesArrSize == totalPagesCnt)
                         throw new AssertionError("Incorrect estimated dirty pages number: " + cpPages.pagesNum());
 
                     pages[pagePos++] = page;
@@ -4845,12 +4846,17 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
             Comparator<FullPageId> cmp = Comparator.comparingInt(FullPageId::groupId)
                 .thenComparingLong(FullPageId::effectivePageId);
 
+            ExecutorService pool = null;
+
             for (T2<PageMemoryEx, FullPageId[]> pagesPerReg : cpPagesPerRegion) {
                 if (pagesPerReg.getValue().length >= parallelSortThreshold)
-                    parallelSortInIsolatedPool(pagesPerReg.get2(), cmp);
+                    pool = parallelSortInIsolatedPool(pagesPerReg.get2(), cmp, pool);
                 else
                     Arrays.sort(pagesPerReg.get2(), cmp);
             }
+
+            if (pool != null)
+                pool.shutdown();
         }
 
         return new GridConcurrentMultiPairQueue<>(cpPagesPerRegion);
@@ -4862,9 +4868,10 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
      * @param pagesArr Pages array.
      * @param cmp Cmp.
      */
-    private static void parallelSortInIsolatedPool(
+    private static ExecutorService parallelSortInIsolatedPool(
         FullPageId[] pagesArr,
-        Comparator<FullPageId> cmp
+        Comparator<FullPageId> cmp,
+        ExecutorService pool
     ) throws IgniteCheckedException {
         ForkJoinPool.ForkJoinWorkerThreadFactory factory = new ForkJoinPool.ForkJoinWorkerThreadFactory() {
             @Override public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
@@ -4876,9 +4883,10 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
             }
         };
 
-        ForkJoinPool forkJoinPool = new ForkJoinPool(PARALLEL_SORT_THREADS + 1, factory, null, false);
+        ExecutorService execPool = pool == null ?
+            new ForkJoinPool(PARALLEL_SORT_THREADS + 1, factory, null, false) : pool;
 
-        ForkJoinTask sortTask = forkJoinPool.submit(() -> Arrays.parallelSort(pagesArr, cmp));
+        Future<?> sortTask = execPool.submit(() -> Arrays.parallelSort(pagesArr, cmp));
 
         try {
             sortTask.get();
@@ -4890,7 +4898,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
             throw new IgniteCheckedException("Failed to perform pages array parallel sort", e.getCause());
         }
 
-        forkJoinPool.shutdown();
+        return execPool;
     }
 
     /** Pages write task */
@@ -4982,8 +4990,8 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
             boolean throttlingEnabled = resolveThrottlingPolicy() != PageMemoryImpl.ThrottlingPolicy.DISABLED;
 
-            GridConcurrentMultiPairQueue.Res<PageMemoryEx, FullPageId> res =
-                new GridConcurrentMultiPairQueue.Res<>();
+            GridConcurrentMultiPairQueue.Result<PageMemoryEx, FullPageId> res =
+                new GridConcurrentMultiPairQueue.Result<>();
 
             writePageIds.next(res);
 

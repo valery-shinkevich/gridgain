@@ -16,25 +16,24 @@
 
 package org.apache.ignite.internal.util;
 
-import org.apache.ignite.internal.pagemem.FullPageId;
-import org.apache.ignite.internal.processors.cache.persistence.pagemem.PageMemoryEx;
 import org.apache.ignite.internal.util.typedef.T2;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Concurrent queue that wraps collection of {@code Pair<K, V[]>}
- * The only garantee {@link #poll} provided is sequentially emtify values per key array.
+ * The only garantee {@link #poll} or {@code forEach} provided is sequentially emptify values per key array.
  * i.e. input like: <br>
  * p1 = new Pair<1, [1, 3, 5, 7]> <br>
  * p2 = new Pair<2, [2, 3]> <br>
  * p3 = new Pair<3, [200, 100]> <br>
- * and further sequence of {@code poll} calls may produce output like: <br>
+ * and further sequence of {@code poll} or {@code forEach} calls may produce output like: <br>
  * [3, 200], [3, 100], [1, 1], [1, 3], [1, 5], [1, 7], [2, 2], [2, 3]
  *
  * @param <K> The type of key in input pair collection.
@@ -49,10 +48,10 @@ public class GridConcurrentMultiPairQueue<K, V> {
     private final V[][] vals;
 
     /** Storage for every array length. */
-    private final long[] lenSeq;
+    private final int[] lenSeq;
 
     /** Current absolute position. */
-    private final AtomicLong pos = new AtomicLong();
+    private final AtomicInteger pos = new AtomicInteger();
 
     /** Precalculated max position. */
     private final int maxPos;
@@ -71,14 +70,14 @@ public class GridConcurrentMultiPairQueue<K, V> {
 
         keysArr = (K[])new Object[pairCnt];
 
-        lenSeq = new long[pairCnt];
+        lenSeq = new int[pairCnt];
 
         int keyPos = 0;
 
         int size = -1;
 
         for (Map.Entry<K, ? extends Collection<V>> p : items.entrySet()) {
-            if (p.getValue().size() == 0)
+            if (p.getValue().isEmpty())
                 continue;
 
             keysArr[keyPos] = p.getKey();
@@ -99,7 +98,7 @@ public class GridConcurrentMultiPairQueue<K, V> {
 
         keysArr = (K[])new Object[pairCnt];
 
-        lenSeq = new long[pairCnt];
+        lenSeq = new int[pairCnt];
 
         int keyPos = 0;
 
@@ -125,8 +124,8 @@ public class GridConcurrentMultiPairQueue<K, V> {
      *
      * @return the head of this queue, or {@code null} if this queue is empty
      */
-    private @Nullable T2<K, V> poll() {
-        long absPos = pos.getAndIncrement();
+    public @Nullable T2<K, V> poll() {
+        int absPos = pos.getAndIncrement();
 
         if (absPos >= maxPos)
             return null;
@@ -134,7 +133,7 @@ public class GridConcurrentMultiPairQueue<K, V> {
         int segment = cachedSegment.get();
 
         if (absPos > lenSeq[segment]) {
-            segment = Arrays.binarySearch(lenSeq, absPos);
+            segment = Arrays.binarySearch(lenSeq, segment, lenSeq.length - 1, absPos);;
 
             segment = segment < 0 ? -segment - 1 : segment;
 
@@ -148,19 +147,20 @@ public class GridConcurrentMultiPairQueue<K, V> {
         return new T2<>(key, vals[segment][relPos]);
     }
 
-    /**
+    /** Return next initialized input class instance. */
+    public void next(Result<K, V> res) {
+        int absPos = pos.getAndIncrement();
 
-     */
-    public void next(Res<K, V> res) {
-        long absPos = pos.getAndIncrement();
-
-        if (absPos >= maxPos)
+        if (absPos >= maxPos) {
             res.set(null, null, 0);
+
+            return;
+        }
 
         int segment = res.getSegment();
 
         if (absPos > lenSeq[segment]) {
-            segment = Arrays.binarySearch(lenSeq, absPos);
+            segment = Arrays.binarySearch(lenSeq, segment, lenSeq.length - 1, absPos);
 
             segment = segment < 0 ? -segment - 1 : segment;
         }
@@ -186,34 +186,42 @@ public class GridConcurrentMultiPairQueue<K, V> {
         return maxPos;
     }
 
-    /** */
-    public static class Res<K, V> {
-        int segment;
+    /** State holder. */
+    public static class Result<K, V> {
+        /** Current segment. */
+        private int segment;
 
-        K pageMem;
+        /** Key holder. */
+        private K key;
 
-        V fullPageId;
+        /** Value holeder. */
+        private V val;
 
-        public void set(K pageMem, V fullPageId, int seg) {
-            this.pageMem = pageMem;
-            this.fullPageId = fullPageId;
+        /** Current state setter. */
+        public void set(K k, V v, int seg) {
+            key = k;
+            val = v;
             segment = seg;
         }
 
-        public int getSegment() {
+        /** Current segment. */
+        private int getSegment() {
             return segment;
         }
 
+        /** Current key. */
         public K getKey() {
-            return pageMem;
+            return key;
         }
 
+        /** Current value. */
         public V getValue() {
-            return fullPageId;
+            return val;
         }
 
+        /** */
         @Override public String toString() {
-            return "pageMem=" + pageMem + ", fullPageId=" + fullPageId;
+            return S.toString(Result.class, this);
         }
     }
 }
