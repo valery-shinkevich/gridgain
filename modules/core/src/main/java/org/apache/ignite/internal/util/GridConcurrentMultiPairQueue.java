@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Concurrent queue that wraps collection of {@code Pair<K, V[]>}
- * The only garantee {@link #poll} or {@code forEach} provided is sequentially emptify values per key array.
+ * The only garantee {@link #poll} or {@link #next} provided is sequentially emptify values per key array.
  * i.e. input like: <br>
  * p1 = new Pair<1, [1, 3, 5, 7]> <br>
  * p2 = new Pair<2, [2, 3]> <br>
