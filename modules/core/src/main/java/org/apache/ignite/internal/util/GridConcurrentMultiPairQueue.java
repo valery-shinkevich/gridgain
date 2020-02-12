@@ -133,14 +133,14 @@ public class GridConcurrentMultiPairQueue<K, V> {
         int segment = cachedSegment.get();
 
         if (absPos > lenSeq[segment]) {
-            segment = Arrays.binarySearch(lenSeq, segment, lenSeq.length - 1, absPos);;
+            segment = Arrays.binarySearch(lenSeq, segment, lenSeq.length - 1, absPos);
 
             segment = segment < 0 ? -segment - 1 : segment;
 
             cachedSegment.set(segment);
         }
 
-        int relPos = segment == 0 ? (int)absPos : (int)(absPos - lenSeq[segment - 1] - 1);
+        int relPos = segment == 0 ? absPos : (absPos - lenSeq[segment - 1] - 1);
 
         K key = keysArr[segment];
 
@@ -165,7 +165,7 @@ public class GridConcurrentMultiPairQueue<K, V> {
             segment = segment < 0 ? -segment - 1 : segment;
         }
 
-        int relPos = segment == 0 ? (int)absPos : (int)(absPos - lenSeq[segment - 1] - 1);
+        int relPos = segment == 0 ? absPos : (absPos - lenSeq[segment - 1] - 1);
 
         K key = keysArr[segment];
 

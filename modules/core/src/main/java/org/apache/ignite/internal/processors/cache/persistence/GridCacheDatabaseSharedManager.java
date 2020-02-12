@@ -551,9 +551,9 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
      * @return triple with collections of FullPageIds obtained from each PageMemory, overall number of dirty
      * pages, and flag defines at least one user page became a dirty since last checkpoint.
      */
-    private CheckpointPagesInfoHolder beginAllCheckpoints(IgniteInternalFuture allowToReplace) {
+    private CheckpointPagesInfoHolder beginAllCheckpoints(IgniteInternalFuture<?> allowToReplace) {
         Collection<Map.Entry<PageMemoryEx, GridMultiCollectionWrapper<FullPageId>>> res =
-            new ArrayList(dataRegions().size());
+            new ArrayList<>(dataRegions().size());
 
         int pagesNum = 0;
 
@@ -3271,7 +3271,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
         Collection<DataRegion> regions = dataRegions();
 
-        CheckpointPagesInfoHolder cpPagesHolder = beginAllCheckpoints(new GridFinishedFuture());
+        CheckpointPagesInfoHolder cpPagesHolder = beginAllCheckpoints(new GridFinishedFuture<>());
 
         // Sort and split all dirty pages set to several stripes.
         GridConcurrentMultiPairQueue<PageMemoryEx, FullPageId> pages =
@@ -4825,7 +4825,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
             for (int i = 0; i < regPages.getValue().collectionsSize(); i++) {
                 for (FullPageId page : regPages.getValue().innerCollection(i)) {
                     if (realPagesArrSize++ == totalPagesCnt)
-                        throw new AssertionError("Incorrect estimated dirty pages number: " + cpPages.pagesNum());
+                        throw new AssertionError("Incorrect estimated dirty pages number: " + totalPagesCnt);
 
                     pages[pagePos++] = page;
                 }
@@ -4842,7 +4842,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
             Comparator<FullPageId> cmp = Comparator.comparingInt(FullPageId::groupId)
                 .thenComparingLong(FullPageId::effectivePageId);
 
-            ExecutorService pool = null;
+            ForkJoinPool pool = null;
 
             for (T2<PageMemoryEx, FullPageId[]> pagesPerReg : cpPagesPerRegion) {
                 if (pagesPerReg.getValue().length >= parallelSortThreshold)
@@ -4864,10 +4864,10 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
      * @param pagesArr Pages array.
      * @param cmp Cmp.
      */
-    private static ExecutorService parallelSortInIsolatedPool(
+    private static ForkJoinPool parallelSortInIsolatedPool(
         FullPageId[] pagesArr,
         Comparator<FullPageId> cmp,
-        ExecutorService pool
+        ForkJoinPool pool
     ) throws IgniteCheckedException {
         ForkJoinPool.ForkJoinWorkerThreadFactory factory = new ForkJoinPool.ForkJoinWorkerThreadFactory() {
             @Override public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
@@ -4879,7 +4879,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
             }
         };
 
-        ExecutorService execPool = pool == null ?
+        ForkJoinPool execPool = pool == null ?
             new ForkJoinPool(PARALLEL_SORT_THREADS + 1, factory, null, false) : pool;
 
         Future<?> sortTask = execPool.submit(() -> Arrays.parallelSort(pagesArr, cmp));
@@ -4976,7 +4976,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
         private GridConcurrentMultiPairQueue<PageMemoryEx, FullPageId> writePages(
             GridConcurrentMultiPairQueue<PageMemoryEx, FullPageId> writePageIds
         ) throws IgniteCheckedException {
-            Map<PageMemoryEx, List<FullPageId>> pagesToRetry = new ConcurrentHashMap<>();
+            Map<PageMemoryEx, List<FullPageId>> pagesToRetry = new HashMap<>();
 
             CheckpointMetricsTracker tracker = persStoreMetrics.metricsEnabled() ? this.tracker : null;
 
