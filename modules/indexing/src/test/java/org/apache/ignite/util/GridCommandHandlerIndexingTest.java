@@ -42,7 +42,7 @@ import static org.apache.ignite.util.GridCommandHandlerIndexingUtils.GROUP_NAME;
  */
 public class GridCommandHandlerIndexingTest extends GridCommandHandlerClusterPerMethodAbstractTest {
 
-    public static final int NODES_COUNTER_FOR_TEST = 2;
+    public static final int GRID_CNT = 2;
 
     /** */
     @Test
@@ -104,7 +104,7 @@ public class GridCommandHandlerIndexingTest extends GridCommandHandlerClusterPer
 
         corruptIndexPartition(idxPath);
 
-        startGrids(NODES_COUNTER_FOR_TEST);
+        startGrids(GRID_CNT);
 
         awaitPartitionMapExchange();
 
@@ -127,7 +127,7 @@ public class GridCommandHandlerIndexingTest extends GridCommandHandlerClusterPer
         stopAllGrids();
 
         FileUtils.copyFile(new File(getClass().getResource("index.bin").toURI()), indexPartition(ignite, GROUP_NAME));
-        startGrids(NODES_COUNTER_FOR_TEST);
+        startGrids(GRID_CNT);
 
         awaitPartitionMapExchange();
 
@@ -145,7 +145,7 @@ public class GridCommandHandlerIndexingTest extends GridCommandHandlerClusterPer
      * @throws Exception
      */
     private Ignite prepareGridForTest() throws Exception{
-        Ignite ignite = startGrids(NODES_COUNTER_FOR_TEST);
+        Ignite ignite = startGrids(GRID_CNT);
 
         ignite.cluster().active(true);
 
