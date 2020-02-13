@@ -283,7 +283,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
     private QueryParser parser;
 
     /** Memory manager */
-    private QueryMemoryManager memoryManager;
+    private QueryMemoryManager memoryMgr;
 
     /** */
     private final IgniteInClosure<? super IgniteInternalFuture<?>> logger = new IgniteInClosure<IgniteInternalFuture<?>>() {
@@ -551,7 +551,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
                 mvccSnapshot,
                 null,
                 true,
-                maxMem < 0 ? null : memoryManager.createQueryMemoryTracker(maxMem),
+                memoryMgr.createQueryMemoryTracker(maxMem),
                 ctx);
 
             return new GridQueryFieldsResultAdapter(select.meta(), null) {
@@ -2078,7 +2078,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
      * @return Reduce query executor.
      */
     public QueryMemoryManager memoryManager() {
-        return memoryManager;
+        return memoryMgr;
     }
 
     /** {@inheritDoc} */
@@ -2110,7 +2110,8 @@ public class IgniteH2Indexing implements GridQueryIndexing {
 
         nodeId = ctx.localNodeId();
         marshaller = ctx.config().getMarshaller();
-        memoryManager = new QueryMemoryManager(ctx);
+
+        memoryMgr = new QueryMemoryManager(ctx);
 
         mapQryExec = new GridMapQueryExecutor();
         rdcQryExec = new GridReduceQueryExecutor();
@@ -2393,7 +2394,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
         if (connMgr != null)
             cmdProc.stop();
 
-        U.closeQuiet(memoryManager);
+        memoryMgr.close();
 
         if (log.isDebugEnabled())
             log.debug("Cache query index stopped.");
