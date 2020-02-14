@@ -169,12 +169,23 @@ public class SqlStatisticOffloadingTest extends DiskSpillingAbstractTest {
      * Metrics data.
      */
     private static class Metrics {
-        final long writtenServer;
-        final long readServer;
-        final long filesNumServer;
-        final long writtenClient;
-        final long readClient;
-        final long fileNumClient;
+        /** */
+        private final long writtenServer;
+
+        /** */
+        private final long readServer;
+
+        /** */
+        private final long filesNumServer;
+
+        /** */
+        private final long writtenClient;
+
+        /** */
+        private final long readClient;
+
+        /** */
+        private final long fileNumClient;
 
         /** */
         private Metrics(

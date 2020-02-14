@@ -28,5 +28,5 @@ public interface H2QueryContext {
     /**
      * @return Group by data factory.
      */
-    H2GroupByDataFactory groupByDataFactory();
+    ManagedGroupByDataFactory groupByDataFactory();
 }

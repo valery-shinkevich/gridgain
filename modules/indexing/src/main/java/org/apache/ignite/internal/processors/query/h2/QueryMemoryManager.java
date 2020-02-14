@@ -53,7 +53,7 @@ import static org.apache.ignite.internal.util.IgniteUtils.KB;
 /**
  * Query memory manager.
  */
-public class QueryMemoryManager implements H2MemoryTracker, H2GroupByDataFactory {
+public class QueryMemoryManager implements H2MemoryTracker, ManagedGroupByDataFactory {
     /**
      *  Spill directory path. Spill directory is used for the disk offloading
      *  of intermediate results of the heavy queries.
@@ -327,7 +327,7 @@ public class QueryMemoryManager implements H2MemoryTracker, H2GroupByDataFactory
 
                     UUID nodeUuid = UUID.fromString(nodeId);
 
-                    if (!ctx.discovery().alive(nodeUuid))
+                    if (!ctx.discovery().alive(nodeUuid) || ctx.localNodeId().equals(nodeUuid))
                         spillFile.delete();
                 }
                 catch (Exception e) {
@@ -342,7 +342,7 @@ public class QueryMemoryManager implements H2MemoryTracker, H2GroupByDataFactory
     }
 
     /** {@inheritDoc} */
-    @Override public GroupByData newGroupByDataInstance(Session ses, ArrayList<Expression> expressions,
+    @Override public GroupByData newManagedGroupByData(Session ses, ArrayList<Expression> expressions,
         boolean isGrpQry, int[] grpIdx) {
 
         boolean spillingEnabled = ctx.config().isSqlOffloadingEnabled();

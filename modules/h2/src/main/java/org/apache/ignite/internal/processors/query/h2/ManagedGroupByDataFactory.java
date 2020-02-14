@@ -23,7 +23,7 @@ import org.h2.expression.Expression;
 /**
  * Factory for H2 group by data.
  */
-public interface H2GroupByDataFactory {
+public interface ManagedGroupByDataFactory {
 
     /**
      * Group-by data fabric method.
@@ -34,5 +34,5 @@ public interface H2GroupByDataFactory {
      * @param grpIdx Group-by fields indexes.
      * @return Group-by data.
      */
-    GroupByData newGroupByDataInstance(Session ses, ArrayList<Expression> expressions, boolean isGrpQry, int[] grpIdx);
+    GroupByData newManagedGroupByData(Session ses, ArrayList<Expression> expressions, boolean isGrpQry, int[] grpIdx);
 }
