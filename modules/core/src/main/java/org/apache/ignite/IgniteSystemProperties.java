@@ -543,6 +543,9 @@ public final class IgniteSystemProperties {
     /** Enable backward compatible handling of UUID through DDL. */
     public static final String IGNITE_SQL_UUID_DDL_BYTE_FORMAT = "IGNITE_SQL_UUID_DDL_BYTE_FORMAT";
 
+    /** Enable memory quotas per JDBC connection. */
+    public static final String IGNITE_SQL_ENABLE_CONNECTION_MEMORY_QUOTA = "IGNITE_SQL_ENABLE_CONNECTION_MEMORY_QUOTA";
+
     /** Maximum size for affinity assignment history. */
     public static final String IGNITE_AFFINITY_HISTORY_SIZE = "IGNITE_AFFINITY_HISTORY_SIZE";
 
@@ -1280,14 +1283,6 @@ public final class IgniteSystemProperties {
      * Default: false.
      */
     public static final String IGNITE_ENABLE_HASH_JOIN = "IGNITE_ENABLE_HASH_JOIN";
-
-    /**
-     * Index rebuilding parallelism level. If specified, sets the count of threads that are used for index rebuilding
-     * and can only be greater than <code>0</code>, otherwise default value will be used. Maximum count of threads
-     * can't be greater than total available processors count.
-     * Default value is minimum of <code>4</code> and processors count / 4, but always greater than <code>0</code>.
-     */
-    public static final String INDEX_REBUILDING_PARALLELISM = "INDEX_REBUILDING_PARALLELISM";
 
     /** Enable write rebalnce statistics into log. Default: false */
     public static final String IGNITE_WRITE_REBALANCE_STATISTICS = "IGNITE_WRITE_REBALANCE_STATISTICS";

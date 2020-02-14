@@ -260,7 +260,7 @@ public class QueryMemoryManager implements H2MemoryTracker, H2GroupByDataFactory
     /**
      * @return Current query quota.
      */
-    public String getQryQuotaStr() {
+    public String getQueryQuotaString() {
         return qryQuotaStr;
     }
 

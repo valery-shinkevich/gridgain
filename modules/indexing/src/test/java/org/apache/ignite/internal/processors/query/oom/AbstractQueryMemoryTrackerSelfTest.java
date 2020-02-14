@@ -33,6 +33,7 @@ import org.apache.ignite.internal.processors.query.h2.H2MemoryTracker;
 import org.apache.ignite.internal.processors.query.h2.IgniteH2Indexing;
 import org.apache.ignite.internal.processors.query.h2.QueryMemoryManager;
 import org.apache.ignite.testframework.GridTestUtils;
+import org.apache.ignite.testframework.junits.WithSystemProperty;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
@@ -40,12 +41,14 @@ import org.h2.result.LocalResult;
 import org.h2.result.LocalResultImpl;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import static org.apache.ignite.IgniteSystemProperties.IGNITE_SQL_ENABLE_CONNECTION_MEMORY_QUOTA;
 import static org.apache.ignite.internal.util.IgniteUtils.KB;
 import static org.apache.ignite.internal.util.IgniteUtils.MB;
 
 /**
  * Basic test class for quotas.
  */
+@WithSystemProperty(key = IGNITE_SQL_ENABLE_CONNECTION_MEMORY_QUOTA, value = "true")
 public abstract class AbstractQueryMemoryTrackerSelfTest extends GridCommonAbstractTest {
     /** Row count. */
     static final int SMALL_TABLE_SIZE = 1000;
