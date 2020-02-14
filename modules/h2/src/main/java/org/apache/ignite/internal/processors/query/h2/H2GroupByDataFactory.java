@@ -19,13 +19,11 @@ import java.util.ArrayList;
 import org.h2.command.dml.GroupByData;
 import org.h2.engine.Session;
 import org.h2.expression.Expression;
-import org.h2.result.ResultExternal;
-import org.h2.result.SortOrder;
 
 /**
- * Memory manager for H2 query memory tracking and disk offloading.
+ * Factory for H2 group by data.
  */
-public interface H2MemoryManager {
+public interface H2GroupByDataFactory {
 
     /**
      * Group-by data fabric method.
@@ -37,26 +35,4 @@ public interface H2MemoryManager {
      * @return Group-by data.
      */
     GroupByData newGroupByDataInstance(Session ses, ArrayList<Expression> expressions, boolean isGrpQry, int[] grpIdx);
-
-    /**
-     * Creates plain external result.
-     *
-     * @param session Session.
-     * @return New external result.
-     */
-    ResultExternal createPlainExternalResult(Session session);
-
-    /**
-     * Creates sorted external result.
-     *
-     * @param session Session.
-     * @param distinct Distinct flag.
-     * @param indexes Distinct indexes.
-     * @param visibleColCnt Visible column count.
-     * @param sort Sort.
-     * @param rowCount Row count.
-     * @return Sorted external result.
-     */
-    ResultExternal createSortedExternalResult(Session session, boolean distinct, int[] indexes, int visibleColCnt,
-        SortOrder sort, int rowCount);
 }

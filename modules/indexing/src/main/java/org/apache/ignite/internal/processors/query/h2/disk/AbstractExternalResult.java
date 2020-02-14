@@ -63,7 +63,7 @@ public abstract class AbstractExternalResult<T> implements AutoCloseable {
         boolean useHashIdx,
         long initSize,
         Class<T> cls) {
-        memMgr = (QueryMemoryManager)ses.queryMemoryManager();
+        memMgr = (QueryMemoryManager)ses.groupByDataFactory();
         assert memMgr != null;
         this.log = memMgr.log();
         this.data = memMgr.createExternalData(ses, useHashIdx, initSize, cls);

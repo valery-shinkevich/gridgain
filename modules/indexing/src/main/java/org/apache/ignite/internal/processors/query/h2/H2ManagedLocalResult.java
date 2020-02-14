@@ -321,9 +321,9 @@ public class H2ManagedLocalResult implements LocalResult {
     }
 
     private void createExternalResult(boolean forcePlainResult) {
-        H2MemoryManager memMgr = session.getQueryContext().queryMemoryManager();
+        QueryMemoryManager memMgr = (QueryMemoryManager)session.getQueryContext().groupByDataFactory();
         if (forcePlainResult)
-            external = memMgr.createPlainExternalResult(session); //new PlainExternalResult(ctx, memTracker, session);
+            external = memMgr.createPlainExternalResult(session);
         else {
             external = distinct || distinctIndexes != null || sort != null ?
                 memMgr.createSortedExternalResult(session, distinct, distinctIndexes, visibleColumnCount, sort, rowCount)

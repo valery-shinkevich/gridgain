@@ -166,7 +166,7 @@ public class SqlStatisticOffloadingTest extends DiskSpillingAbstractTest {
     }
 
     /**
-     * Metrics data,
+     * Metrics data.
      */
     private static class Metrics {
         final long writtenServer;
@@ -177,7 +177,8 @@ public class SqlStatisticOffloadingTest extends DiskSpillingAbstractTest {
         final long fileNumClient;
 
         /** */
-        private Metrics(long writtenServer,
+        private Metrics(
+            long writtenServer,
             long readServer,
             long filesNumServer,
             long writtenClient,
@@ -245,7 +246,8 @@ public class SqlStatisticOffloadingTest extends DiskSpillingAbstractTest {
         /**
          * Fabric method.
          */
-        static Metrics of(long writtenServer,
+        static Metrics of(
+            long writtenServer,
             long readServer,
             long filesNumServer,
             long writtenClient,

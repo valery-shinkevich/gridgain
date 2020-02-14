@@ -17,7 +17,7 @@
 package org.apache.ignite.internal.processors.query.h2.opt;
 
 import org.apache.ignite.internal.processors.cache.mvcc.MvccSnapshot;
-import org.apache.ignite.internal.processors.query.h2.H2MemoryManager;
+import org.apache.ignite.internal.processors.query.h2.H2GroupByDataFactory;
 import org.apache.ignite.internal.processors.query.h2.H2MemoryTracker;
 import org.apache.ignite.internal.processors.query.h2.H2QueryContext;
 import org.apache.ignite.internal.processors.query.h2.QueryMemoryManager;
@@ -151,7 +151,7 @@ public class QueryContext implements H2QueryContext {
     }
 
     /** {@inheritDoc} */
-    @Override public H2MemoryManager queryMemoryManager() {
+    @Override public H2GroupByDataFactory groupByDataFactory() {
         return memoryMgr;
     }
 

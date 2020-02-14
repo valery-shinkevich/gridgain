@@ -53,7 +53,7 @@ import static org.apache.ignite.internal.util.IgniteUtils.KB;
 /**
  * Query memory manager.
  */
-public class QueryMemoryManager implements H2MemoryTracker, H2MemoryManager  {
+public class QueryMemoryManager implements H2MemoryTracker, H2GroupByDataFactory {
     /**
      *  Spill directory path. Spill directory is used for the disk offloading
      *  of intermediate results of the heavy queries.
@@ -355,13 +355,24 @@ public class QueryMemoryManager implements H2MemoryTracker, H2MemoryManager  {
         return new H2ManagedGroupByData(ses, grpIdx);
     }
 
-    /** {@inheritDoc} */
-    @Override public ResultExternal createPlainExternalResult(Session ses) {
+    /**
+     * @param ses Session.
+     * @return Plain external result.
+     */
+    public ResultExternal createPlainExternalResult(Session ses) {
         return new PlainExternalResult(ses);
     }
 
-    /** {@inheritDoc} */
-    @Override public ResultExternal createSortedExternalResult(Session ses, boolean distinct, int[] distinctIndexes,
+    /**
+     * @param ses Session.
+     * @param distinct Distinct flag.
+     * @param distinctIndexes Distinct indexes.
+     * @param visibleColCnt Visible columns count.
+     * @param sort Sort order.
+     * @param rowCnt Row count.
+     * @return Sorted external result.
+     */
+    public ResultExternal createSortedExternalResult(Session ses, boolean distinct, int[] distinctIndexes,
         int visibleColCnt, SortOrder sort, int rowCnt) {
         return new SortedExternalResult(ses, distinct, distinctIndexes, visibleColCnt, sort, rowCnt);
     }
@@ -388,7 +399,7 @@ public class QueryMemoryManager implements H2MemoryTracker, H2MemoryManager  {
         if (!ses.isOffloadedToDisk()) {
             ses.setOffloadedToDisk(true);
 
-            metrics.trackFileCreated();
+            metrics.trackQueryOffloaded();
         }
 
         return new ExternalResultData<>(log,

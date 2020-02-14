@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import org.apache.ignite.internal.processors.query.h2.H2MemoryManager;
+import org.apache.ignite.internal.processors.query.h2.H2GroupByDataFactory;
 import org.apache.ignite.internal.processors.query.h2.H2MemoryTracker;
 import org.apache.ignite.internal.processors.query.h2.H2QueryContext;
 import org.h2.api.ErrorCode;
@@ -244,10 +244,10 @@ public class Session extends SessionWithState implements TransactionStore.Rollba
     }
 
     /**
-     * @return Query memory manager if it is available or 'null' otherwise.
+     * @return Group by data factory.
      */
-    public H2MemoryManager queryMemoryManager() {
-        return qryContext != null ? qryContext.queryMemoryManager() : null;
+    public H2GroupByDataFactory groupByDataFactory() {
+        return qryContext != null ? qryContext.groupByDataFactory() : null;
     }
 
     /**
@@ -255,7 +255,7 @@ public class Session extends SessionWithState implements TransactionStore.Rollba
      */
     public GroupByData newGroupByDataInstance(ArrayList<Expression> expressions, boolean isGrpQry, int[] grpIdx) {
         if (qryContext != null && qryContext.queryMemoryTracker() != null) {
-            GroupByData grpByData = qryContext.queryMemoryManager()
+            GroupByData grpByData = qryContext.groupByDataFactory()
                 .newGroupByDataInstance(this, expressions, isGrpQry, grpIdx);
 
             if (grpByData != null)
